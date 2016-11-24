@@ -1,9 +1,14 @@
 //our username
 var name;
 var connectedUser;
+var conn;
 
 //connecting to our signaling server
-var conn = new WebSocket('ws://localhost:9090');
+var WS = window.WebSocket || window.MozWebSocket;;
+
+if (WS){
+    var conn = new WS('ws://192.168.0.18:9090');
+}
 
 conn.onopen = function () {
    console.log("Connected to the signaling server");
@@ -96,8 +101,10 @@ function handleLogin(success) {
       //Starting a peer connection
       //**********************
 
+      console.log('entrou no login');
+      console.log(navigator);
       //getting local audio stream
-      navigator.webkitGetUserMedia({ video: false, audio: true }, function (myStream) {
+      navigator.webkitGetUserMedia({ video: true, audio: true }, function (myStream) {
          stream = myStream;
 
          //displaying local audio stream on the page
@@ -107,7 +114,7 @@ function handleLogin(success) {
          var configuration = {
             "iceServers": [{ "url": "stun:stun2.1.google.com:19302" }]
          };
-
+         console.log('criou uma conexão');
          yourConn = new webkitRTCPeerConnection(configuration);
 
          // setup stream listening
@@ -141,7 +148,8 @@ callBtn.addEventListener("click", function () {
 
    if (callToUsername.length > 0) {
       connectedUser = callToUsername;
-
+      console.log('teste')
+      console.log(yourConn)
       // create an offer
       yourConn.createOffer(function (offer) {
          send({

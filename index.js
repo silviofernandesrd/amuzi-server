@@ -1,9 +1,15 @@
 // const request = require('request-promise')
+const fs = require('fs');
+const https = require('https');
+const privateKey  = fs.readFileSync('sslcert/server.key', 'utf8');
+const certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
 const path = require('path')
 const express = require('express')
 const exphbs = require('express-handlebars')
 const app = express()
 const port = 3000
+
+const credentials = {key: privateKey, cert: certificate};
 
 app.engine('.hbs', exphbs({
   defaultLayout: 'main',
@@ -30,7 +36,10 @@ app.get('/server-old', (request, response) => {
 //   response.send('Hello from Express!')
 // })
 
-app.listen(port, (err) => {
+var httpsServer = https.createServer(credentials, app);
+
+// app.listen(port, (err) => {
+httpsServer.listen(port, (err) => {
   if (err) {
     return console.log('something bad happened', err)
   }
