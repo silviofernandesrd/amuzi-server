@@ -22,9 +22,10 @@ npm start
 node scripts/server.js
 ```
 
-## criar chaves ssl
+## criar chaves ssl self-signed para development
 ```
-openssl genrsa 1024 > host.key
-chmod 400 host.key
-openssl req -new -x509 -nodes -sha1 -days 365 -key host.key -out host.cert
+openssl genrsa -out key.pem
+openssl req -new -key key.pem -out csr.pem
+openssl x509 -req -days 9999 -in csr.pem -signkey key.pem -out cert.pem
+rm csr.pem
 ```

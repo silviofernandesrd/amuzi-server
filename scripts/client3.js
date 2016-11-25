@@ -7,7 +7,7 @@ var conn;
 var WS = window.WebSocket || window.MozWebSocket;;
 
 if (WS){
-    var conn = new WS('ws://192.168.0.18:9090');
+    conn = new WS('ws://192.168.0.18:9090');
 }
 
 conn.onopen = function () {
