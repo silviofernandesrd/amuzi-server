@@ -1,24 +1,23 @@
-//our username
+//our talk
 var name;
 var connectedUser;
 var conn;
 
 //connecting to our signaling server
-var WS = window.WebSocket || window.MozWebSocket;;
+var WS = window.WebSocket || window.MozWebSocket;
 
 if (WS){
     conn = new WS('ws://192.168.0.18:9090');
 }
 
 conn.onopen = function () {
-   console.log("Connected to the signaling server");
+   console.log("Conectado ao servidor");
 };
 
 //when we got a message from a signaling server
 conn.onmessage = function (msg) {
-   console.log("Got message", msg.data);
+   console.log("server >", msg.data);
    var data = JSON.parse(msg.data);
-
    switch(data.type) {
       case "login":
          handleLogin(data.success);
@@ -60,71 +59,59 @@ function send(message) {
 //UI selectors block
 //******
 
-var loginPage = document.querySelector('#loginPage');
-var usernameInput = document.querySelector('#usernameInput');
-var loginBtn = document.querySelector('#loginBtn');
+var connectTalk = document.querySelector('#connectTalk');
+var talkCodeInput = document.querySelector('#talkCodeInput');
+var connectBtn = document.querySelector('#connectBtn');
 
-var callPage = document.querySelector('#callPage');
-var callToUsernameInput = document.querySelector('#callToUsernameInput');
+var talkPage = document.querySelector('#talkPage');
+var callTotalkCodeInput = document.querySelector('#callTotalkCodeInput');
 var callBtn = document.querySelector('#callBtn');
 
-var hangUpBtn = document.querySelector('#hangUpBtn');
+var closeTalkBtn = document.querySelector('#closeTalkBtn');
 var localAudio = document.querySelector('#localAudio');
 var remoteAudio = document.querySelector('#remoteAudio');
 
 var yourConn;
 var stream;
 
-callPage.style.display = "none";
+talkPage.style.display = "none";
 
 // Login when the user clicks the button
-loginBtn.addEventListener("click", function (event) {
-   name = usernameInput.value;
-
+connectBtn.addEventListener("click", function (event) {
+   name = talkCodeInput.value;
    if (name.length > 0) {
       send({
          type: "login",
          name: name
       });
    }
-
 });
 
 function handleLogin(success) {
    if (success === false) {
       alert("Ooops...try a different username");
    } else {
-      loginPage.style.display = "none";
-      callPage.style.display = "block";
-
+      connectTalk.style.display = "none";
+      talkPage.style.display = "block";
       //**********************
       //Starting a peer connection
       //**********************
-
-      console.log('entrou no login');
-      console.log(navigator);
       //getting local audio stream
-      navigator.webkitGetUserMedia({ video: true, audio: true }, function (myStream) {
+      navigator.webkitGetUserMedia({ video: false, audio: true }, function (myStream) {
          stream = myStream;
-
          //displaying local audio stream on the page
          localAudio.src = window.URL.createObjectURL(stream);
-
          //using Google public stun server
          var configuration = {
             "iceServers": [{ "url": "stun:stun2.1.google.com:19302" }]
          };
-         console.log('criou uma conexão');
          yourConn = new webkitRTCPeerConnection(configuration);
-
          // setup stream listening
          yourConn.addStream(stream);
-
          //when a remote user adds stream to the peer connection, we display it
-         yourConn.onaddstream = function (e) {
-            remoteAudio.src = window.URL.createObjectURL(e.stream);
-         };
-
+        //  yourConn.onaddstream = function (e) {
+        //     remoteAudio.src = window.URL.createObjectURL(e.stream);
+        //  };
          // Setup ice handling
          yourConn.onicecandidate = function (event) {
             if (event.candidate) {
@@ -134,18 +121,15 @@ function handleLogin(success) {
                });
             }
          };
-
       }, function (error) {
          console.log(error);
       });
 
    }
 };
-
 //initiating a call
 callBtn.addEventListener("click", function () {
-   var callToUsername = callToUsernameInput.value;
-
+   var callToUsername = callTotalkCodeInput.value;
    if (callToUsername.length > 0) {
       connectedUser = callToUsername;
       console.log('teste')
@@ -156,7 +140,6 @@ callBtn.addEventListener("click", function () {
             type: "offer",
             offer: offer
          });
-
          yourConn.setLocalDescription(offer);
       }, function (error) {
          alert("Error when creating an offer");
@@ -195,19 +178,22 @@ function handleCandidate(candidate) {
 };
 
 //hang up
-hangUpBtn.addEventListener("click", function () {
+closeTalkBtn.addEventListener("click", function () {
    send({
       type: "leave"
    });
 
-   handleLeave();
+  //  handleLeave();
 });
 
 function handleLeave() {
    connectedUser = null;
-   remoteAudio.src = null;
+  //  remoteAudio.src = null;
 
    yourConn.close();
    yourConn.onicecandidate = null;
    yourConn.onaddstream = null;
+
+   connectTalk.style.display = "block";
+   talkPage.style.display = "none";
 };

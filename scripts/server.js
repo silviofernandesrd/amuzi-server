@@ -1,151 +1,199 @@
-//require our websocket library
-var WebSocketServer = require('ws').Server;
+//our talk
+var name;
+var connectedUser;
+var conn;
 
-//creating a websocket server at port 9090
-var wss = new WebSocketServer({port: 9090});
+//connecting to our signaling server
+var WS = window.WebSocket || window.MozWebSocket;
 
-//all connected to the server users
-var users = {};
+if (WS){
+    conn = new WS('ws://192.168.0.18:9090');
+}
 
-//when a user connects to our sever
-wss.on('connection', function(connection) {
+conn.onopen = function () {
+   console.log("Conectado ao servidor");
+};
 
-   console.log("User connected");
+//when we got a message from a signaling server
+conn.onmessage = function (msg) {
+   console.log("server >", msg.data);
+   var data = JSON.parse(msg.data);
+   switch(data.type) {
+      case "login":
+         handleLogin(data.success);
+         break;
+      //when somebody wants to call us
+      case "offer":
+         handleOffer(data.offer, data.name);
+         break;
+      case "answer":
+         handleAnswer(data.answer);
+         break;
+      //when a remote peer sends an ice candidate to us
+      case "candidate":
+         handleCandidate(data.candidate);
+         break;
+      case "leave":
+         handleLeave();
+         break;
+      default:
+         break;
+   }
+};
 
-   //when server gets a message from a connected user
-   connection.on('message', function(message) {
+conn.onerror = function (err) {
+   console.log("Got error", err);
+};
 
-      var data;
+//alias for sending JSON encoded messages
+function send(message) {
+   //attach the other peer username to our messages
+   if (connectedUser) {
+      message.name = connectedUser;
+   }
 
-      //accepting only JSON messages
-      try {
-         data = JSON.parse(message);
-      } catch (e) {
-         console.log("Invalid JSON");
-         data = {};
-      }
+   conn.send(JSON.stringify(message));
+};
 
-      //switching type of the user message
-      switch (data.type) {
-         //when a user tries to login
-         case "login":
-            console.log("User logged", data.name);
+//******
+//UI selectors block
+//******
 
-            //if anyone is logged in with this username then refuse
-            if(users[data.name]) {
-               sendTo(connection, {
-                  type: "login",
-                  success: false
-               });
-            } else {
-               //save user connection on the server
-               users[data.name] = connection;
-               connection.name = data.name;
+var createTalk = document.querySelector('#createTalk');
+var talkCodeInput = document.querySelector('#talkCodeInput');
+var createBtn = document.querySelector('#createBtn');
 
-               sendTo(connection, {
-                  type: "login",
-                  success: true
-               });
-            }
+var talkPage = document.querySelector('#talkPage');
+var callTotalkCodeInput = document.querySelector('#callTotalkCodeInput');
+var callBtn = document.querySelector('#callBtn');
 
-            break;
+var closeTalkBtn = document.querySelector('#closeTalkBtn');
+var localAudio = document.querySelector('#localAudio');
+var remoteAudio = document.querySelector('#remoteAudio');
 
-         case "offer":
-            //for ex. UserA wants to call UserB
-            console.log("Sending offer to: ", data.name);
+var yourConn;
+var stream;
 
-            //if UserB exists then send him offer details
-            var conn = users[data.name];
+talkPage.style.display = "none";
 
-            if(conn != null) {
-               //setting that UserA connected with UserB
-               connection.otherName = data.name;
-
-               sendTo(conn, {
-                  type: "offer",
-                  offer: data.offer,
-                  name: connection.name
-               });
-            }
-
-            break;
-
-         case "answer":
-            console.log("Sending answer to: ", data.name);
-            //for ex. UserB answers UserA
-            var conn = users[data.name];
-
-            if(conn != null) {
-               connection.otherName = data.name;
-               sendTo(conn, {
-                  type: "answer",
-                  answer: data.answer
-               });
-            }
-
-            break;
-
-         case "candidate":
-            console.log("Sending candidate to:",data.name);
-            var conn = users[data.name];
-
-            if(conn != null) {
-               sendTo(conn, {
-                  type: "candidate",
-                  candidate: data.candidate
-               });
-            }
-
-            break;
-
-         case "leave":
-            console.log("Disconnecting from", data.name);
-            var conn = users[data.name];
-            conn.otherName = null;
-
-            //notify the other user so he can disconnect his peer connection
-            if(conn != null) {
-               sendTo(conn, {
-                  type: "leave"
-               });
-            }
-
-            break;
-
-         default:
-            sendTo(connection, {
-               type: "error",
-               message: "Command not found: " + data.type
-            });
-
-            break;
-      }
-   });
-
-   //when user exits, for example closes a browser window
-   //this may help if we are still in "offer","answer" or "candidate" state
-   connection.on("close", function() {
-
-      if(connection.name) {
-         delete users[connection.name];
-
-         if(connection.otherName) {
-            console.log("Disconnecting from ", connection.otherName);
-            var conn = users[connection.otherName];
-            conn.otherName = null;
-
-            if(conn != null) {
-               sendTo(conn, {
-                  type: "leave"
-              });
-            }
-         }
-      }
-   });
-
-   connection.send("\"Hello world\"");
+// Login when the user clicks the button
+createBtn.addEventListener("click", function (event) {
+   name = talkCodeInput.value;
+   if (name.length > 0) {
+      send({
+         type: "login",
+         name: name
+      });
+   }
 });
 
-function sendTo(connection, message) {
-   connection.send(JSON.stringify(message));
-}
+function handleLogin(success) {
+   if (success === false) {
+      alert("Ooops...try a different username");
+   } else {
+      createTalk.style.display = "none";
+      talkPage.style.display = "block";
+      //**********************
+      //Starting a peer connection
+      //**********************
+      //getting local audio stream
+      navigator.webkitGetUserMedia({ video: false, audio: true }, function (myStream) {
+         stream = myStream;
+         //displaying local audio stream on the page
+         localAudio.src = window.URL.createObjectURL(stream);
+         //using Google public stun server
+         var configuration = {
+            "iceServers": [{ "url": "stun:stun2.1.google.com:19302" }]
+         };
+         yourConn = new webkitRTCPeerConnection(configuration);
+         // setup stream listening
+         yourConn.addStream(stream);
+         //when a remote user adds stream to the peer connection, we display it
+        //  yourConn.onaddstream = function (e) {
+        //     remoteAudio.src = window.URL.createObjectURL(e.stream);
+        //  };
+         // Setup ice handling
+         yourConn.onicecandidate = function (event) {
+            if (event.candidate) {
+               send({
+                  type: "candidate",
+                  candidate: event.candidate
+               });
+            }
+         };
+      }, function (error) {
+         console.log(error);
+      });
+
+   }
+};
+//initiating a call
+callBtn.addEventListener("click", function () {
+   var callToUsername = callTotalkCodeInput.value;
+   if (callToUsername.length > 0) {
+      connectedUser = callToUsername;
+      console.log('teste')
+      console.log(yourConn)
+      // create an offer
+      yourConn.createOffer(function (offer) {
+         send({
+            type: "offer",
+            offer: offer
+         });
+         yourConn.setLocalDescription(offer);
+      }, function (error) {
+         alert("Error when creating an offer");
+      });
+   }
+});
+
+//when somebody sends us an offer
+function handleOffer(offer, name) {
+   connectedUser = name;
+   yourConn.setRemoteDescription(new RTCSessionDescription(offer));
+
+   //create an answer to an offer
+   yourConn.createAnswer(function (answer) {
+      yourConn.setLocalDescription(answer);
+
+      send({
+         type: "answer",
+         answer: answer
+      });
+
+   }, function (error) {
+      alert("Error when creating an answer");
+   });
+
+};
+
+//when we got an answer from a remote user
+function handleAnswer(answer) {
+   yourConn.setRemoteDescription(new RTCSessionDescription(answer));
+};
+
+//when we got an ice candidate from a remote user
+function handleCandidate(candidate) {
+   yourConn.addIceCandidate(new RTCIceCandidate(candidate));
+};
+
+//hang up
+closeTalkBtn.addEventListener("click", function () {
+   send({
+      type: "leave"
+   });
+
+  //  handleLeave();
+});
+
+function handleLeave() {
+   connectedUser = null;
+  //  remoteAudio.src = null;
+
+   yourConn.close();
+   yourConn.onicecandidate = null;
+   yourConn.onaddstream = null;
+
+   createTalk.style.display = "block";
+   talkPage.style.display = "none";
+};
