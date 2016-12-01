@@ -7,7 +7,7 @@
 6 silly lifecycle @silviofernandesrd/app-test@1.0.0~prestart: no script for prestart, continuing
 7 info lifecycle @silviofernandesrd/app-test@1.0.0~start: @silviofernandesrd/app-test@1.0.0
 8 verbose lifecycle @silviofernandesrd/app-test@1.0.0~start: unsafe-perm in lifecycle true
-9 verbose lifecycle @silviofernandesrd/app-test@1.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/home/silviofernandes/src/test_apps/webrtc/node-stream/node_modules/.bin:/usr/local/heroku/bin:/home/silviofernandes/.rvm/gems/ruby-2.3.1/bin:/home/silviofernandes/.rvm/gems/ruby-2.3.1@global/bin:/home/silviofernandes/.rvm/rubies/ruby-2.3.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/home/silviofernandes/.rvm/wrappers:/home/silviofernandes/.rvm/bin:/home/silviofernandes/.rvm/bin:/home/silviofernandes/.rvm/wrappers
+9 verbose lifecycle @silviofernandesrd/app-test@1.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/home/silviofernandes/src/test_apps/webrtc/node-stream/node_modules/.bin:/home/silviofernandes/.rvm/gems/ruby-2.3.1/bin:/home/silviofernandes/.rvm/gems/ruby-2.3.1@global/bin:/home/silviofernandes/.rvm/rubies/ruby-2.3.1/bin:/usr/local/heroku/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/home/silviofernandes/.rvm/bin
 10 verbose lifecycle @silviofernandesrd/app-test@1.0.0~start: CWD: /home/silviofernandes/src/test_apps/webrtc/node-stream
 11 silly lifecycle @silviofernandesrd/app-test@1.0.0~start: Args: [ '-c', 'node index.js' ]
 12 silly lifecycle @silviofernandesrd/app-test@1.0.0~start: Returned: code: 1  signal: null

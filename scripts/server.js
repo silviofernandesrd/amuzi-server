@@ -7,6 +7,7 @@ var conn;
 var WS = window.WebSocket || window.MozWebSocket;
 
 if (WS){
+    // process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
     conn = new WS('ws://192.168.0.18:9090');
 }
 
@@ -16,7 +17,6 @@ conn.onopen = function () {
 
 //when we got a message from a signaling server
 conn.onmessage = function (msg) {
-   console.log("server >", msg.data);
    var data = JSON.parse(msg.data);
    switch(data.type) {
       case "login":
@@ -65,7 +65,6 @@ var createBtn = document.querySelector('#createBtn');
 
 var talkPage = document.querySelector('#talkPage');
 var callTotalkCodeInput = document.querySelector('#callTotalkCodeInput');
-var callBtn = document.querySelector('#callBtn');
 
 var closeTalkBtn = document.querySelector('#closeTalkBtn');
 var localAudio = document.querySelector('#localAudio');
@@ -127,25 +126,6 @@ function handleLogin(success) {
 
    }
 };
-//initiating a call
-callBtn.addEventListener("click", function () {
-   var callToUsername = callTotalkCodeInput.value;
-   if (callToUsername.length > 0) {
-      connectedUser = callToUsername;
-      console.log('teste')
-      console.log(yourConn)
-      // create an offer
-      yourConn.createOffer(function (offer) {
-         send({
-            type: "offer",
-            offer: offer
-         });
-         yourConn.setLocalDescription(offer);
-      }, function (error) {
-         alert("Error when creating an offer");
-      });
-   }
-});
 
 //when somebody sends us an offer
 function handleOffer(offer, name) {
@@ -183,7 +163,7 @@ closeTalkBtn.addEventListener("click", function () {
       type: "leave"
    });
 
-  //  handleLeave();
+   handleLeave();
 });
 
 function handleLeave() {

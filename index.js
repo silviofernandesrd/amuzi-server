@@ -81,7 +81,7 @@ wss.on('connection', function(connection) {
    console.log("Usuario conectado");
    //when server gets a message from a connected user
    connection.on('message', function(message) {
-      var data;
+      var data; 
       //accepting only JSON messages
       try {
          data = JSON.parse(message);

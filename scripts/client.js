@@ -16,7 +16,6 @@ conn.onopen = function () {
 
 //when we got a message from a signaling server
 conn.onmessage = function (msg) {
-   console.log("server >", msg.data);
    var data = JSON.parse(msg.data);
    switch(data.type) {
       case "login":
@@ -59,13 +58,14 @@ function send(message) {
 //UI selectors block
 //******
 
+var divLogin = document.querySelector('#login');
 var connectTalk = document.querySelector('#connectTalk');
 var talkCodeInput = document.querySelector('#talkCodeInput');
 var connectBtn = document.querySelector('#connectBtn');
+var loginBtn = document.querySelector('#loginBtn');
 
 var talkPage = document.querySelector('#talkPage');
 var callTotalkCodeInput = document.querySelector('#callTotalkCodeInput');
-var callBtn = document.querySelector('#callBtn');
 
 var closeTalkBtn = document.querySelector('#closeTalkBtn');
 var localAudio = document.querySelector('#localAudio');
@@ -74,65 +74,46 @@ var remoteAudio = document.querySelector('#remoteAudio');
 var yourConn;
 var stream;
 
+connectTalk.style.display = "none";
 talkPage.style.display = "none";
 
-// Login when the user clicks the button
-connectBtn.addEventListener("click", function (event) {
-   name = talkCodeInput.value;
-   if (name.length > 0) {
-      send({
-         type: "login",
-         name: name
-      });
-   }
-});
-
 function handleLogin(success) {
+  console.log(success);
    if (success === false) {
       alert("Ooops...try a different username");
    } else {
-      connectTalk.style.display = "none";
-      talkPage.style.display = "block";
+      divLogin.style.display = "none";
+      talkPage.style.display = "none";
+      connectTalk.style.display = "block";
       //**********************
       //Starting a peer connection
       //**********************
-      //getting local audio stream
-      navigator.webkitGetUserMedia({ video: false, audio: true }, function (myStream) {
-         stream = myStream;
-         //displaying local audio stream on the page
-         localAudio.src = window.URL.createObjectURL(stream);
-         //using Google public stun server
-         var configuration = {
-            "iceServers": [{ "url": "stun:stun2.1.google.com:19302" }]
-         };
-         yourConn = new webkitRTCPeerConnection(configuration);
-         // setup stream listening
-         yourConn.addStream(stream);
-         //when a remote user adds stream to the peer connection, we display it
-        //  yourConn.onaddstream = function (e) {
-        //     remoteAudio.src = window.URL.createObjectURL(e.stream);
-        //  };
-         // Setup ice handling
-         yourConn.onicecandidate = function (event) {
-            if (event.candidate) {
-               send({
-                  type: "candidate",
-                  candidate: event.candidate
-               });
-            }
-         };
-      }, function (error) {
-         console.log(error);
-      });
+      var configuration = {
+        "iceServers": [{ "url": "stun:stun2.1.google.com:19302" }]
+      };
+      yourConn = new webkitRTCPeerConnection(configuration);
 
+      //when a remote user adds stream to the peer connection, we display it
+      yourConn.onaddstream = function (e) {
+        remoteAudio.src = window.URL.createObjectURL(e.stream);
+      };
+
+      // Setup ice handling
+      yourConn.onicecandidate = function (event) {
+        if (event.candidate) {
+          send({
+            type: "candidate",
+            candidate: event.candidate
+          });
+        }
+      }
    }
 };
 //initiating a call
-callBtn.addEventListener("click", function () {
-   var callToUsername = callTotalkCodeInput.value;
+connectBtn.addEventListener("click", function () {
+   var callToUsername = talkCodeInput.value;
    if (callToUsername.length > 0) {
       connectedUser = callToUsername;
-      console.log('teste')
       console.log(yourConn)
       // create an offer
       yourConn.createOffer(function (offer) {
@@ -144,6 +125,9 @@ callBtn.addEventListener("click", function () {
       }, function (error) {
          alert("Error when creating an offer");
       });
+      divLogin.style.display = "none";
+      talkPage.style.display = "block";
+      connectTalk.style.display = "none";
    }
 });
 
@@ -183,7 +167,7 @@ closeTalkBtn.addEventListener("click", function () {
       type: "leave"
    });
 
-  //  handleLeave();
+   handleLeave();
 });
 
 function handleLeave() {
@@ -194,6 +178,19 @@ function handleLeave() {
    yourConn.onicecandidate = null;
    yourConn.onaddstream = null;
 
-   connectTalk.style.display = "block";
+   divLogin.style.display = "block";
    talkPage.style.display = "none";
+   connectTalk.style.display = "none";
 };
+
+// Login when the user clicks the button
+loginBtn.addEventListener("click", function () {
+  name = Math.random().toString(36).substring(10);
+  if (name.length > 0) {
+    console.log('login')
+    send({
+       type: "login",
+       name: name
+    });
+  }
+});
