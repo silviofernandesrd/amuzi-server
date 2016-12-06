@@ -81,7 +81,7 @@ wss.on('connection', function(connection) {
    console.log("Usuario conectado");
    //when server gets a message from a connected user
    connection.on('message', function(message) {
-      var data; 
+      var data;
       //accepting only JSON messages
       try {
          data = JSON.parse(message);
@@ -104,6 +104,7 @@ wss.on('connection', function(connection) {
                //save user connection on the server
                users[data.name] = connection;
                connection.name = data.name;
+               console.log("connection.name >", connection.name);
                sendTo(connection, {
                   type: "login",
                   success: true

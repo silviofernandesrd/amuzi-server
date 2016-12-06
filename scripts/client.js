@@ -12,6 +12,13 @@ if (WS){
 
 conn.onopen = function () {
    console.log("Conectado ao servidor");
+   name = Math.random().toString(36).substring(10);
+   if (name.length > 0) {
+     send({
+        type: "login",
+        name: name
+     });
+   }
 };
 
 //when we got a message from a signaling server
@@ -58,11 +65,9 @@ function send(message) {
 //UI selectors block
 //******
 
-var divLogin = document.querySelector('#login');
 var connectTalk = document.querySelector('#connectTalk');
 var talkCodeInput = document.querySelector('#talkCodeInput');
 var connectBtn = document.querySelector('#connectBtn');
-var loginBtn = document.querySelector('#loginBtn');
 
 var talkPage = document.querySelector('#talkPage');
 var callTotalkCodeInput = document.querySelector('#callTotalkCodeInput');
@@ -74,40 +79,50 @@ var remoteAudio = document.querySelector('#remoteAudio');
 var yourConn;
 var stream;
 
-connectTalk.style.display = "none";
 talkPage.style.display = "none";
+connectTalk.style.display = "none";
 
 function handleLogin(success) {
-  console.log(success);
-   if (success === false) {
-      alert("Ooops...try a different username");
-   } else {
-      divLogin.style.display = "none";
-      talkPage.style.display = "none";
-      connectTalk.style.display = "block";
-      //**********************
-      //Starting a peer connection
-      //**********************
-      var configuration = {
-        "iceServers": [{ "url": "stun:stun2.1.google.com:19302" }]
-      };
-      yourConn = new webkitRTCPeerConnection(configuration);
-
-      //when a remote user adds stream to the peer connection, we display it
-      yourConn.onaddstream = function (e) {
-        remoteAudio.src = window.URL.createObjectURL(e.stream);
-      };
-
-      // Setup ice handling
-      yourConn.onicecandidate = function (event) {
-        if (event.candidate) {
-          send({
-            type: "candidate",
-            candidate: event.candidate
-          });
-        }
-      }
-   }
+  if (success === false) {
+    alert("Ooops...try a different username");
+  } else {
+    talkPage.style.display = "none";
+    connectTalk.style.display = "block";
+    //**********************
+    //Starting a peer connection
+    //**********************
+    //getting local audio stream
+    navigator.webkitGetUserMedia({ video: false, audio: true }, function (myStream) {
+       stream = myStream;
+       // mute audio
+       stream.getAudioTracks()[0].enabled = false;
+       //displaying local audio stream on the page
+      //  localAudio.src = window.URL.createObjectURL(stream);
+       //using Google public stun server
+       var configuration = {
+          "iceServers": [{ "url": "stun:stun2.1.google.com:19302" }]
+       };
+       yourConn = new webkitRTCPeerConnection(configuration);
+       // setup stream listening
+       yourConn.addStream(stream);
+       //when a remote user adds stream to the peer connection, we display it
+       yourConn.onaddstream = function (e) {
+          remoteAudio.src = window.URL.createObjectURL(e.stream);
+       };
+       // Setup ice handling
+       yourConn.onicecandidate = function (event) {
+         console.log("event.candidate >", event.candidate);
+          if (event.candidate) {
+             send({
+                type: "candidate",
+                candidate: event.candidate
+             });
+          }
+       };
+    }, function (error) {
+       console.log(error);
+    });
+  }
 };
 //initiating a call
 connectBtn.addEventListener("click", function () {
@@ -125,7 +140,6 @@ connectBtn.addEventListener("click", function () {
       }, function (error) {
          alert("Error when creating an offer");
       });
-      divLogin.style.display = "none";
       talkPage.style.display = "block";
       connectTalk.style.display = "none";
    }
@@ -178,19 +192,6 @@ function handleLeave() {
    yourConn.onicecandidate = null;
    yourConn.onaddstream = null;
 
-   divLogin.style.display = "block";
    talkPage.style.display = "none";
-   connectTalk.style.display = "none";
+   connectTalk.style.display = "block";
 };
-
-// Login when the user clicks the button
-loginBtn.addEventListener("click", function () {
-  name = Math.random().toString(36).substring(10);
-  if (name.length > 0) {
-    console.log('login')
-    send({
-       type: "login",
-       name: name
-    });
-  }
-});

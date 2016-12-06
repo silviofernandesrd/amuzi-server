@@ -109,10 +109,11 @@ function handleLogin(success) {
          yourConn.addStream(stream);
          //when a remote user adds stream to the peer connection, we display it
         //  yourConn.onaddstream = function (e) {
-        //     remoteAudio.src = window.URL.createObjectURL(e.stream);
+        //     remoteAudio.src = windo'w.URL.createObjectURL(e.stream);
         //  };
          // Setup ice handling
          yourConn.onicecandidate = function (event) {
+           console.log("event.candidate >", event.candidate);
             if (event.candidate) {
                send({
                   type: "candidate",
