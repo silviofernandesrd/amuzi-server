@@ -8,7 +8,8 @@ var WS = window.WebSocket || window.MozWebSocket;
 
 if (WS){
     // process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-    conn = new WS('ws://192.168.0.18:9090');
+    // conn = new WS('ws://192.168.0.18:9090');
+    conn = new WS('ws://192.168.25.223:9090');
 }
 
 conn.onopen = function () {
