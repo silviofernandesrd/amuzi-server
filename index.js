@@ -3,8 +3,8 @@ var tls = require('tls');
 var crypto = require('crypto');
 var fs = require('fs');
 var https = require('https');
-var privateKey  = fs.readFileSync('sslcert/server.key', 'utf8');
-var certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
+// var privateKey  = fs.readFileSync('sslcert/server.key', 'utf8');
+// var certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
 var pkey = fs.readFileSync('sslcert/key.pem');
 var pcert = fs.readFileSync('sslcert/cert.pem')
 var path = require('path')
@@ -21,11 +21,11 @@ var options = {
     cert: pcert
 };
 
-if (tls.createSecureContext) {
-  credentials = tls.createSecureContext({key: privateKey, cert: certificate});
-} else {
-  credentials = crypto.createCredentials({key: privateKey, cert: certificate});
-}
+// if (tls.createSecureContext) {
+//   credentials = tls.createSecureContext({key: privateKey, cert: certificate});
+// } else {
+//   credentials = crypto.createCredentials({key: privateKey, cert: certificate});
+// }
 
 app.engine('.hbs', exphbs({
   defaultLayout: 'main',
