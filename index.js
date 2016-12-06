@@ -8,7 +8,7 @@ var https = require('https');
 var pkey = fs.readFileSync('sslcert/key.pem');
 var pcert = fs.readFileSync('sslcert/cert.pem')
 var path = require('path')
-var express = require('express')
+var express = require('express  ')
 var exphbs = require('express-handlebars')
 var app = express()
 var port = 3000
@@ -56,10 +56,10 @@ app.get('/server-old', (request, response) => {
 //   response.send('Hello from Express!')
 // })
 
-var httpsServer = https.createServer(options, app);
+// var httpsServer = https.createServer(options, app);
 
-// app.listen(port, (err) => {
-httpsServer.listen(port, (err) => {
+app.listen(port, (err) => {
+// httpsServer.listen(port, (err) => {
   if (err) {
     return console.log('something bad happened', err)
   }
